@@ -8,6 +8,10 @@ import docx, pdfplumber
 import numpy as np
 from sentence_transformers import SentenceTransformer, util
 import db
+import nltk
+from nltk.tokenize import sent_tokenize
+
+nltk.download('punkt')
 
 # Initialize FastAPI
 app = FastAPI()
@@ -43,13 +47,13 @@ def extract_text_from_pdf(file_path: str) -> str:
     with pdfplumber.open(file_path) as pdf:
         return ''.join(page.extract_text() for page in pdf.pages if page.extract_text())
 
-def compare_with_answer_key(extracted_text: str, answer_key: str, threshold: float = 0.7):
+def compare_with_answer_key(extracted_text: str, answer_key: str, threshold: float = 0.6):
     extracted_embedding = model.encode(extracted_text, convert_to_tensor=True)
     answer_embedding = model.encode(answer_key, convert_to_tensor=True)
     similarity_score = util.pytorch_cos_sim(extracted_embedding, answer_embedding).item()
 
-    extracted_sents = [s.strip() for s in extracted_text.split('.') if s.strip()]
-    key_sents = [s.strip() for s in answer_key.split('.') if s.strip()]
+    extracted_sents = sent_tokenize(extracted_text)
+    key_sents = sent_tokenize(answer_key)
 
     matched, missing, max_similarities = [], [], []
 
