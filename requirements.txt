@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+sentence-transformers>=2.2.0
+transformers>=4.30.0
+torch
+python-docx
+pdfplumber
+python-multipart
+gspread
+oauth2client
+bcrypt
+numpy
+pydantic
