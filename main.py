@@ -48,7 +48,7 @@ def extract_text_from_pdf(file_path: str) -> str:
     with pdfplumber.open(file_path) as pdf:
         return ''.join(page.extract_text() for page in pdf.pages if page.extract_text())
 
-def compare_with_answer_key(extracted_text: str, answer_key: str, threshold: float = 0.6):
+def compare_with_answer_key(extracted_text: str, answer_key: str, threshold: float = 0.8):
     # Compute overall similarity between full responses
     extracted_embedding = model.encode(extracted_text, convert_to_tensor=True)
     answer_embedding = model.encode(answer_key, convert_to_tensor=True)
@@ -83,6 +83,10 @@ def compare_with_answer_key(extracted_text: str, answer_key: str, threshold: flo
         max_sim = float(np.max(similarities))  # best match score for this key sentence
         max_similarities.append(max_sim)
 
+        # Print similarity score and match status for each key sentence
+        print(f"Key Sentence [{i}]: \"{key_sents[i]}\"")
+        print(f"  -> Max Similarity: {max_sim:.3f} - {'MATCHED' if max_sim >= threshold else 'MISSED'}\n")
+        
         if max_sim >= threshold:
             matched.append(key_sents[i])
         else:
