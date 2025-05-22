@@ -15,8 +15,8 @@ app = FastAPI()
 # Setup CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=["https://epiccoder16.github.io/ai-graderv4/"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
 )
