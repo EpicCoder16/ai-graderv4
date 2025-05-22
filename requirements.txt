@@ -11,3 +11,4 @@ oauth2client
 bcrypt
 numpy
 pydantic
+nltk>=3.8
