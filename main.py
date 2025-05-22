@@ -71,8 +71,8 @@ def compare_with_answer_key(extracted_text: str, answer_key: str, threshold: flo
         max_similarities = [0.0] * len(key_sents)
 
     return {
-        "similarity_score": similarity_score,
-        "overall_semantic_coverage": np.mean(max_similarities) if max_similarities else 0.0,
+        "similarity_score": float(similarity_score),
+        "overall_semantic_coverage": float(np.mean(max_similarities)) if max_similarities else 0.0,
         "message": "Comparison complete with semantic point analysis.",
         "matched_points": matched,
         "missing_points": missing
