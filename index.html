@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Grader</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 40px;
+        }
+
+        .auth-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px dashed #e0e0e0;
+            border-radius: 8px;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px dashed #e0e0e0;
+            border-radius: 8px;
+        }
+
+        .upload-section h2 {
+            color: #34495e;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 12px 20px;
+            background-color: #e0e0e0;
+            color: #333;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .file-label:hover {
+            background-color: #d0d0d0;
+        }
+
+        button {
+            padding: 12px 25px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        input[type="text"], input[type="password"] {
+            padding: 10px;
+            margin: 5px 0;
+            width: 200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        #responseResult {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+        }
+
+        .result-section {
+            margin-top: 20px;
+        }
+
+        .result-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        details {
+            margin-top: 20px;
+        }
+
+        summary {
+            cursor: pointer;
+            color: #3498db;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        .file-name {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .score-display {
+            font-size: 1.2em;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #e8f4fd;
+            border-radius: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Grader</h1>
+        
+        <div id="authSection" class="auth-section">
+            <h2>Login</h2>
+            <form id="loginForm">
+                <input type="text" id="username" placeholder="Username" required><br>
+                <input type="password" id="password" placeholder="Password" required><br>
+                <button type="submit">Login</button>
+            </form>
+            <p>Don't have an account? <a href="#" id="showRegister">Register</a></p>
+        </div>
+
+        <div id="registerSection" class="auth-section hidden">
+            <h2>Register</h2>
+            <form id="registerForm">
+                <input type="text" id="regUsername" placeholder="Username" required><br>
+                <input type="password" id="regPassword" placeholder="Password" required><br>
+                <button type="submit">Register</button>
+            </form>
+            <p>Already have an account? <a href="#" id="showLogin">Login</a></p>
+        </div>
+
+        <div id="uploadSections" class="hidden">
+            <div class="upload-section">
+                <h2>Upload Answer Key</h2>
+                <form id="answerKeyForm" enctype="multipart/form-data">
+                    <label for="answerKey" class="file-label">Choose Answer Key File</label>
+                    <input type="file" id="answerKey" name="file" accept=".docx,.pdf" required />
+                    <div class="file-name" id="answerKeyName">No file chosen</div>
+                    <button type="submit">Upload Answer Key</button>
+                </form>
+            </div>
+
+            <div class="upload-section">
+                <h2>Upload Student Assignment</h2>
+                <form id="studentFileForm" enctype="multipart/form-data">
+                    <label for="studentFile" class="file-label">Choose Student File</label>
+                    <input type="file" id="studentFile" name="file" accept=".docx,.pdf" required />
+                    <div class="file-name" id="studentFileName">No file chosen</div>
+                    <button type="submit">Upload Student Assignment</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="responseResult"></div>
+    </div>
+
+    <script>
+        let currentUserId = null;
+
+        // Toggle between login and register forms
+        document.getElementById("showRegister").addEventListener("click", function(e) {
+            e.preventDefault();
+            document.getElementById("authSection").classList.add("hidden");
+            document.getElementById("registerSection").classList.remove("hidden");
+        });
+
+        document.getElementById("showLogin").addEventListener("click", function(e) {
+            e.preventDefault();
+            document.getElementById("registerSection").classList.add("hidden");
+            document.getElementById("authSection").classList.remove("hidden");
+        });
+
+        // Register form submission
+        document.getElementById("registerForm").onsubmit = async (e) => {
+            e.preventDefault();
+            const username = document.getElementById("regUsername").value;
+            const password = document.getElementById("regPassword").value;
+
+            try {
+                const response = await fetch("https://ai-graderv3.onrender.com/api/register", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ username, password }),
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert("Registration successful! Please login.");
+                    document.getElementById("registerSection").classList.add("hidden");
+                    document.getElementById("authSection").classList.remove("hidden");
+                } else {
+                    alert(result.detail || "Registration failed");
+                }
+            } catch (err) {
+                console.error("Error during registration:", err);
+                alert("Registration failed. Please try again.");
+            }
+        };
+
+        // Login form submission
+        document.getElementById("loginForm").onsubmit = async (e) => {
+            e.preventDefault();
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            try {
+                const response = await fetch("https://ai-graderv3.onrender.com/api/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ username, password }),
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    currentUserId = result.user_id;
+                    document.getElementById("authSection").classList.add("hidden");
+                    document.getElementById("uploadSections").classList.remove("hidden");
+                } else {
+                    alert(result.detail || "Login failed");
+                }
+            } catch (err) {
+                console.error("Error during login:", err);
+                alert("Login failed. Please try again.");
+            }
+        };
+
+        // Display filename when selected
+        document.getElementById("answerKey").addEventListener("change", function(e) {
+            document.getElementById("answerKeyName").textContent = e.target.files[0]?.name || "No file chosen";
+        });
+
+        document.getElementById("studentFile").addEventListener("change", function(e) {
+            document.getElementById("studentFileName").textContent = e.target.files[0]?.name || "No file chosen";
+        });
+
+        // Upload answer key
+        document.getElementById("answerKeyForm").onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append("file", document.getElementById("answerKey").files[0]);
+
+            try {
+                const response = await fetch("https://ai-graderv3.onrender.com/api/upload_answer_key/", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert("Answer Key uploaded successfully!");
+                } else {
+                    alert(result.detail || "Upload failed");
+                }
+            } catch (err) {
+                console.error("Error during file upload:", err);
+                alert("Upload failed. Please try again.");
+            }
+        };
+
+        // Upload student file
+        document.getElementById("studentFileForm").onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append("file", document.getElementById("studentFile").files[0]);
+            formData.append("user_id", currentUserId);
+
+            try {
+                const response = await fetch("https://ai-graderv3.onrender.com/api/upload/", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert("Student file uploaded and graded successfully!");
+                    document.getElementById("responseResult").innerHTML = `<div class="score-display">Similarity Score: ${(result.comparison_result.similarity_score * 100).toFixed(2)}%</div>    <div class="result-section">
+        <h3>Matched Points:</h3>
+        <pre>${(result.comparison_result.matched_points || []).join('\n')}</pre>
+    </div>
+    <div class="result-section">
+        <h3>Missed Points:</h3>
+        <pre>${(result.comparison_result.missed_points || []).join('\n')}</pre>
+    </div>`;
+                } else {
+                    alert(result.detail || "Upload failed");
+                }
+            } catch (err) {
+                console.error("Error during file upload:", err);
+                alert("Upload failed. Please try again.");
+            }
+        };
+    </script>
+</body>
+</html>
