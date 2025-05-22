@@ -58,6 +58,9 @@ def compare_with_answer_key(extracted_text: str, answer_key: str, threshold: flo
     extracted_sents = sent_tokenize(extracted_text)
     key_sents = sent_tokenize(answer_key)
 
+    print("Extracted Sentences:", extracted_sents)
+    print("Answer Key Sentences:", key_sents)
+    
     matched = []
     missing = []
     max_similarities = []
