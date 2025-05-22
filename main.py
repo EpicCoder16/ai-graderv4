@@ -92,6 +92,9 @@ def compare_with_answer_key(extracted_text: str, answer_key: str, threshold: flo
         else:
             missing.append(key_sents[i])
 
+    print("Matched Sentences Final:", matched)
+    print("Missed Sentences Final:", missing)
+    
     return {
         "similarity_score": float(similarity_score),
         "overall_semantic_coverage": float(np.mean(max_similarities)),
