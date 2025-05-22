@@ -12,6 +12,7 @@ import nltk
 from nltk.tokenize import sent_tokenize
 
 nltk.download('punkt')
+nltk.download('punkt_tab')
 
 # Initialize FastAPI
 app = FastAPI()
