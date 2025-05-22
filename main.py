@@ -49,35 +49,45 @@ def extract_text_from_pdf(file_path: str) -> str:
         return ''.join(page.extract_text() for page in pdf.pages if page.extract_text())
 
 def compare_with_answer_key(extracted_text: str, answer_key: str, threshold: float = 0.6):
+    # Compute overall similarity between full responses
     extracted_embedding = model.encode(extracted_text, convert_to_tensor=True)
     answer_embedding = model.encode(answer_key, convert_to_tensor=True)
     similarity_score = util.pytorch_cos_sim(extracted_embedding, answer_embedding).item()
 
+    # Tokenize both into sentences
     extracted_sents = sent_tokenize(extracted_text)
     key_sents = sent_tokenize(answer_key)
 
-    matched, missing, max_similarities = [], [], []
+    matched = []
+    missing = []
+    max_similarities = []
 
-    if key_sents and extracted_sents:
-        key_embeddings = model.encode(key_sents, convert_to_tensor=True)
-        extracted_embeddings = model.encode(extracted_sents, convert_to_tensor=True)
+    if not key_sents or not extracted_sents:
+        return {
+            "similarity_score": float(similarity_score),
+            "overall_semantic_coverage": 0.0,
+            "message": "No sentences to compare.",
+            "matched_points": [],
+            "missing_points": key_sents
+        }
 
-        for i, key_emb in enumerate(key_embeddings):
-            similarities = util.pytorch_cos_sim(key_emb, extracted_embeddings)[0].cpu().numpy()
-            max_sim = np.max(similarities)
-            max_similarities.append(max_sim)
+    # Encode sentence embeddings
+    key_embeddings = model.encode(key_sents, convert_to_tensor=True)
+    extracted_embeddings = model.encode(extracted_sents, convert_to_tensor=True)
 
-            if max_sim >= threshold:
-                matched.append(key_sents[i])
-            else:
-                missing.append(key_sents[i])
-    else:
-        missing = key_sents
-        max_similarities = [0.0] * len(key_sents)
+    for i, key_emb in enumerate(key_embeddings):
+        similarities = util.pytorch_cos_sim(key_emb, extracted_embeddings)[0].cpu().numpy()
+        max_sim = float(np.max(similarities))  # best match score for this key sentence
+        max_similarities.append(max_sim)
+
+        if max_sim >= threshold:
+            matched.append(key_sents[i])
+        else:
+            missing.append(key_sents[i])
 
     return {
         "similarity_score": float(similarity_score),
-        "overall_semantic_coverage": float(np.mean(max_similarities)) if max_similarities else 0.0,
+        "overall_semantic_coverage": float(np.mean(max_similarities)),
         "message": "Comparison complete with semantic point analysis.",
         "matched_points": matched,
         "missing_points": missing
