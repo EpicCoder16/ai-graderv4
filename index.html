@@ -140,6 +140,16 @@
         .hidden {
             display: none;
         }
+
+        .points-list { /* Added style for the new list */
+            list-style: disc; /* Use bullet points */
+            padding-left: 20px; /* Indent the list */
+            margin-top: 10px;
+        }
+
+        .points-list li {
+            margin-bottom: 5px; /* Space between list items */
+        }
     </style>
 </head>
 <body>
@@ -314,14 +324,29 @@
                 const result = await response.json();
                 if (response.ok) {
                     alert("Student file uploaded and graded successfully!");
-                    document.getElementById("responseResult").innerHTML = `<div class="score-display">Similarity Score: ${(result.comparison_result.similarity_score * 100).toFixed(2)}%</div>    <div class="result-section">
-        <h3>Matched Points:</h3>
-        <pre>${(result.comparison_result.matched_points || []).join('\n')}</pre>
-    </div>
-    <div class="result-section">
-        <h3>Missed Points:</h3>
-        <pre>${(result.comparison_result.missed_points || []).join('\n')}</pre>
-    </div>`;
+                    
+                    // Generate HTML for matched points
+                    const matchedPointsHtml = (result.comparison_result.matched_points || [])
+                        .map(point => `<li>${point}</li>`).join('');
+
+                    // Generate HTML for missed points
+                    const missedPointsHtml = (result.comparison_result.missing_points || [])
+                        .map(point => `<li>${point}</li>`).join('');
+
+                    document.getElementById("responseResult").innerHTML = `
+                        <div class="score-display">
+                            Similarity Score: ${(result.comparison_result.similarity_score * 100).toFixed(2)}%
+                        </div>
+                        <div class="result-section">
+                            <h3>Matched Points:</h3>
+                            ${matchedPointsHtml ? `<ul class="points-list">${matchedPointsHtml}</ul>` : '<p>No matched points.</p>'}
+                        </div>
+                        <div class="result-section">
+                            <h3>Missed Points:</h3>
+                            ${missedPointsHtml ? `<ul class="points-list">${missedPointsHtml}</ul>` : '<p>No missed points.</p>'}
+                        </div>
+                    `;
+                    
                 } else {
                     alert(result.detail || "Upload failed");
                 }
