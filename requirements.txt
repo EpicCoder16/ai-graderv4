@@ -12,3 +12,4 @@ bcrypt
 numpy
 pydantic
 nltk>=3.8
+email-validator
