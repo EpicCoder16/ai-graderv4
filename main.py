@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.requests import Request
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 import shutil, os, logging
 import docx, pdfplumber
 import numpy as np
@@ -157,7 +157,7 @@ def get_user_comparisons(user_id: str):
 
 # User model
 class User(BaseModel):
-    username: str
+    username: EmailStr
     password: str
 
 # Register user
